@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PPT Description Model</title>
+  <style>
+    body {
+      background: #181c24;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .main-title {
+      text-align: left;
+      font-size: 2rem;
+      font-weight: bold;
+      margin: 40px 0 0 60px;
+      color: #fff;
+    }
+    .upload-container {
+      background: #232a36;
+      border-radius: 18px;
+      max-width: 900px;
+      margin: 40px auto 0 auto;
+      padding: 32px 32px 16px 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .upload-area {
+      background: #232a36;
+      border: 2px dashed #ffffff;
+      border-radius: 10px;
+      padding: 40px 20px;
+      text-align: center;
+      color: #ffffff;
+      font-size: 1.1rem;
+      margin-bottom: 24px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      width: 100%;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .upload-area.dragover {
+      border-color: #ffffff;
+      background: #1a2230;
+      color: #ffffff;
+    }
+    .upload-area .cloud-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+      color: #ffffff;
+    }
+    .hidden-input {
+      display: none;
+    }
+    .btn-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 18px;
+      margin-top: 8px;
+      justify-content: center;
+    }
+    .btn {
+      color: #ffffff;
+      background :#3399ff;
+      padding: 10px 28px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      outline: none;
+    }
+    .btn:disabled {
+      background: #222;
+      color: #aaa;
+      border-color: #444;
+      cursor: not-allowed;
+    }
+    .btn.summarize {
+      background: #3399ff;
+      color: #fff;
+      border: 2px solid #3399ff;
+    }
+    .container {
+      background: #232a36;
+      border-radius: 18px;
+      max-width: 900px;
+      margin: 24px auto 0 auto;
+      padding: 32px 32px 32px 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .box {
+      background: #181c24;
+      border-radius: 14px;
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 28px 24px 24px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      color: #fff;
+      width: 100%;
+      text-align: left;
+    }
+    .result-block, .summary-block {
+      background: #232a36;
+      border-radius: 8px;
+      padding: 18px;
+      font-size: 1rem;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+      min-height: 120px;
+      width: 100%;
+      margin-top: 8px;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .summary-block {
+      min-height: 120px;
+    }
+    @media (max-width: 900px) {
+      .container {
+        flex-direction: column;
+        gap: 24px;
+        padding: 24px;
+      }
+      .main-title {
+        margin-left: 24px;
+      }
+    }
+    footer {
+      text-align: center;
+      color: #888;
+      font-size: 0.95rem;
+      margin-top: 40px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-title">PPT Description Model</div>
+  <!-- Upload Box (top) -->
+  <div class="upload-container">
+    <div class="upload-area" id="uploadArea">
+      <div class="cloud-icon">&#9729;</div>
+      <div>Drag &amp; Drop PPT here<br>or Click to Upload</div>
+      <input type="file" id="pptxFile" class="hidden-input" accept=".pptx" required>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="extractBtn">Extract Text</button>
+      <button class="btn summarize" id="summarizeBtn">Summarize</button>
+    </div>
+  </div>
+  <!-- Two side-by-side boxes below -->
+  <div class="container">
+    <!-- Extraction Box -->
+    <div class="box">
+      <div class="section-title">Extracted Text</div>
+      <div class="result-block" id="resultBlock"></div>
+    </div>
+    <!-- Summarizing Box -->
+    <div class="box">
+      <div class="section-title">Summary</div>
+      <div class="summary-block" id="summaryBlock"></div>
+    </div>
+  </div>
+  <footer>
+    &copy; 2024 AI Solutions
+  </footer>
+  <script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('pptxFile');
+    const extractBtn = document.getElementById('extractBtn');
+    const resultBlock = document.getElementById('resultBlock');
+    const summarizeBtn = document.getElementById('summarizeBtn');
+    const summaryBlock = document.getElementById('summaryBlock');
+    let selectedFile = null;
+
+    // Drag & drop events
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        selectedFile = e.dataTransfer.files[0];
+        uploadArea.innerHTML = `<div class="cloud-icon">&#9729;</div><div>${selectedFile.name}</div>`;
+      }
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) {
+        selectedFile = fileInput.files[0];
+        uploadArea.innerHTML = `<div class="cloud-icon">&#9729;</div><div>${selectedFile.name}</div>`;
+      }
+    });
+
+    extractBtn.addEventListener('click', async () => {
+      resultBlock.textContent = "";
+      summaryBlock.textContent = "";
+      if (!selectedFile) {
+        resultBlock.textContent = "Please select a PPTX file first.";
+        return;
+      }
+      extractBtn.disabled = true;
+      extractBtn.textContent = "Processing...";
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      try {
+        const res = await fetch('http://localhost:5000/extract', {
+          method: 'POST',
+          body: formData
+        });
+        if (!res.ok) throw new Error('Failed to extract text');
+        const data = await res.json();
+        if (data.length === 0) {
+          resultBlock.textContent = "No text found in the presentation.";
+        } else {
+          resultBlock.textContent = data.map(
+            s => `Slide ${s.slide_index}:\n${s.text}\n${'-'.repeat(30)}`
+          ).join('\n\n');
+        }
+      } catch (err) {
+        resultBlock.textContent = "Error: " + err.message;
+      }
+      extractBtn.disabled = false;
+      extractBtn.textContent = "Extract Text";
+    });
+
+    summarizeBtn.addEventListener('click', async () => {
+      const extractedText = resultBlock.textContent;
+      summaryBlock.textContent = "Summarizing...";
+      try {
+        const res = await fetch('http://localhost:5000/summarize', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({text: extractedText})
+        });
+        if (!res.ok) throw new Error('Failed to summarize');
+        const data = await res.json();
+        summaryBlock.textContent = data.summary;
+      } catch (err) {
+        summaryBlock.textContent = "Error: " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
