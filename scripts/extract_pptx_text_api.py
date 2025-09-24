@@ -2,8 +2,10 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pptx import Presentation
 import tempfile, os
-
+from dotenv import load_dotenv
 import google.generativeai as genai
+load_dotenv()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 app = Flask(__name__)
 CORS(app)
@@ -39,7 +41,7 @@ def summarize():
         return jsonify({"error": "No text provided"}), 400
 
     # Set your Gemini API key here
-    genai.configure(api_key="AIzaSyCLIVxewfBJJYtdxiEab7UJ64-P5dYFSck")
+    genai.configure(api_key=GEMINI_API_KEY)
 
     model = genai.GenerativeModel('gemini-2.0-flash')  # <-- updated model name
     response = model.generate_content(f"Summarize the following text:\n{text}")
